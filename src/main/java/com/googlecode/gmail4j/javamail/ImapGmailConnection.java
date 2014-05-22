@@ -123,6 +123,10 @@ public class ImapGmailConnection extends GmailConnection implements ProxyAware {
      * @see #setConnected(boolean)
      */
     private boolean connected = false;
+    /**
+     * Debug level for IMAP connection.
+     */
+    private boolean debug;
 
     /**
      * Argless constructor.
@@ -151,11 +155,7 @@ public class ImapGmailConnection extends GmailConnection implements ProxyAware {
         this.loginCredentials = loginCredentials;
     }
 
-    public static IMAPStore connectToImap(String host,
-                                          int port,
-                                          String userEmail,
-                                          String oauthToken,
-                                          boolean debug) throws Exception {
+    public static IMAPStore connectToImap(String host, int port, String userEmail, String oauthToken, boolean debug) throws Exception {
         Properties props = new Properties();
         props.put("mail.imaps.sasl.enable", "true");
         props.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
@@ -269,7 +269,7 @@ public class ImapGmailConnection extends GmailConnection implements ProxyAware {
             if (isConnected()) {
                 disconnect();
             }
-            store = connectToImap(gmailImapHost, gmailImapPort, loginCredentials.getUsername(), loginCredentials.getOauthToken(), true);
+            store = connectToImap(gmailImapHost, gmailImapPort, loginCredentials.getUsername(), loginCredentials.getOauthToken(), debug);
             setConnected(store.isConnected());
         } catch (final Exception e) {
             throw new GmailException("Failed opening Gmail IMAP store", e);
@@ -400,6 +400,10 @@ public class ImapGmailConnection extends GmailConnection implements ProxyAware {
     protected void finalize() throws Throwable {
         disconnect();
         super.finalize();
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
     public static final class OAuth2Provider extends java.security.Provider {

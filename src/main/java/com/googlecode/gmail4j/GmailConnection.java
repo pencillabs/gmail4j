@@ -19,7 +19,7 @@ package com.googlecode.gmail4j;
 import com.googlecode.gmail4j.auth.Credentials;
 
 /**
- * Gmail service connection. 
+ * Gmail service connection.
  * <p>
  * It stores Gmail account {@link Credentials}. Can be extended to use certain
  * protocols, proxies, etc.
@@ -30,11 +30,11 @@ import com.googlecode.gmail4j.auth.Credentials;
  *     GmailConnection conn = new GmailConnection();
  *     conn.setLoginCredentials("username", "password".toCharArray());
  *     gmailClient.setConnection(conn);
- * </pre></blockquote></p> 
- * 
+ * </pre></blockquote></p>
+ *
+ * @author Tomas Varaneckas &lt;tomas.varaneckas@gmail.com&gt;
  * @see GmailClient
  * @see Credentials
- * @author Tomas Varaneckas &lt;tomas.varaneckas@gmail.com&gt;
  * @since 0.2
  */
 public class GmailConnection {
@@ -42,23 +42,23 @@ public class GmailConnection {
     /**
      * Login credentials
      */
-    protected Credentials loginCredentials;  
-    
+    protected Credentials loginCredentials;
+
     /**
-     * Argless constructor. 
-     * <p>
+     * Argless constructor.
+     * <p/>
      * You have to set {@link #loginCredentials} afterwards.
-     * 
+     *
      * @see #setLoginCredentials(Credentials)
      * @see #setLoginCredentials(String, char[])
      */
     public GmailConnection() {
         //nothing to do
     }
-    
+
     /**
      * Constructor that sets {@link #loginCredentials}
-     * 
+     *
      * @param loginCredentials Gmail login credentials
      * @throws GmailException if credentials are not provided
      */
@@ -66,10 +66,10 @@ public class GmailConnection {
         loginCredentials.validate();
         this.loginCredentials = loginCredentials;
     }
-    
+
     /**
      * Convenience constructor that sets {@link #loginCredentials}
-     * 
+     *
      * @param username Gmail username
      * @param password Gmail password
      * @throws GmailException if credentials are not provided
@@ -77,10 +77,10 @@ public class GmailConnection {
     public GmailConnection(final String username, final char[] password) {
         this(new Credentials(username, password));
     }
-    
+
     /**
      * Setter for {@link #loginCredentials}
-     * 
+     *
      * @param loginCredentials Gmail login
      * @throws GmailException if provided {@link Credentials} are invalid
      */
@@ -91,19 +91,19 @@ public class GmailConnection {
 
     /**
      * Wrapper method for setting {@link #loginCredentials}
-     * 
+     *
      * @param username Gmail username
      * @param password Gmail password
      * @throws GmailException if provided {@link Credentials} are invalid
      */
-    public void setLoginCredentials(final String username, 
-            final char[] password) {
+    public void setLoginCredentials(final String username,
+                                    final char[] password) {
         setLoginCredentials(new Credentials(username, password));
     }
-    
+
     /**
      * Disconnects from Gmail
      */
-    public void disconnect() {    	
+    public void disconnect() {
     }
 }

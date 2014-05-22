@@ -16,31 +16,19 @@
  */
 package com.googlecode.gmail4j.javamail;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
-
-import javax.mail.Address;
-import javax.mail.BodyPart;
-import javax.mail.Header;
-import javax.mail.Message;
-import javax.mail.Message.RecipientType;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Session;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
 import com.googlecode.gmail4j.EmailAddress;
 import com.googlecode.gmail4j.GmailException;
 import com.googlecode.gmail4j.GmailMessage;
 import com.googlecode.gmail4j.util.Constants;
+
+import javax.mail.*;
+import javax.mail.Message.RecipientType;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import java.util.*;
+
 /**
- * <a href="http://java.sun.com/products/javamail/">JavaMail</a> implementation 
+ * <a href="http://java.sun.com/products/javamail/">JavaMail</a> implementation
  * of {@link GmailMessage}
  * <p>
  * Example: Send a simple message:
@@ -52,20 +40,20 @@ import com.googlecode.gmail4j.util.Constants;
  *     message.setContentText("Content");
  *     message.addTo(new EmailAddress("j.smith@example.com");
  *     client.send(message);
- * </pre></blockquote></p> 
+ * </pre></blockquote></p>
  * <p>
  * To get full power from JavaMail gmail message you should do this:
  * <p><blockquote><pre>
- *     JavaMailGmailMessage message = (JavaMailGmailMessage) gmailMessage; // cast from GmailMessage 
+ *     JavaMailGmailMessage message = (JavaMailGmailMessage) gmailMessage; // cast from GmailMessage
  *     Message rawJavaMailMessage = message.getMessage();
  *     // now use the full power of JavaMail to fit your needs
- * </pre></blockquote></p> 
- * 
+ * </pre></blockquote></p>
+ *
  * @author Tomas Varaneckas &lt;tomas.varaneckas@gmail.com&gt;
  * @since 0.3
  */
 public class JavaMailGmailMessage extends GmailMessage {
-        
+
     /**
      * Original JavaMail {@link Message}
      */
@@ -81,7 +69,7 @@ public class JavaMailGmailMessage extends GmailMessage {
 
     /**
      * Constructor with source {@link Message}
-     * 
+     *
      * @param source JavaMail message with data
      */
     public JavaMailGmailMessage(final Message source) {
@@ -97,41 +85,50 @@ public class JavaMailGmailMessage extends GmailMessage {
 
     /**
      * Gets the {@link #source} {@link Message}
-     * 
+     *
      * @return source message
      */
     public Message getMessage() {
         return source;
     }
-    
+
     /**
-     * Gets plain text version of the content. Has some limitations - won't 
+     * Gets plain text version of the content. Has some limitations - won't
      * handle nested attachments well.
-     * 
+     *
      * @return String representation of the message
      */
     @Override
     public String getContentText() {
-    	try {
-	    	Object content = source.getContent();
-	    	StringBuilder result = new StringBuilder();
-	    	if (content instanceof String) {
-	    		result.append(content);
-	    	} else if (content instanceof Multipart) {
-	    		Multipart parts = (Multipart) content;
-	    		for (int i = 0; i < parts.getCount(); i++) {
-	    			BodyPart part = parts.getBodyPart(i);
-	    			if (part.getContent() instanceof String) {
-	    				result.append(part.getContent());
-	    			}
-	    		}
-	    	}
-    		return result.toString();
-    	} catch (Exception e) {
-    		throw new GmailException("Failed getting text content from " +
-    				"JavaMailGmailMessage. You could try handling " +
-    				"((JavaMailGmailMessage).getMessage()) manually", e);
-    	}
+        try {
+            Object content = source.getContent();
+            StringBuilder result = new StringBuilder();
+            if (content instanceof String) {
+                result.append(content);
+            } else if (content instanceof Multipart) {
+                Multipart parts = (Multipart) content;
+                for (int i = 0; i < parts.getCount(); i++) {
+                    BodyPart part = parts.getBodyPart(i);
+                    if (part.getContent() instanceof String) {
+                        result.append(part.getContent());
+                    }
+                }
+            }
+            return result.toString();
+        } catch (Exception e) {
+            throw new GmailException("Failed getting text content from " +
+                    "JavaMailGmailMessage. You could try handling " +
+                    "((JavaMailGmailMessage).getMessage()) manually", e);
+        }
+    }
+
+    @Override
+    public void setContentText(final String contentText) {
+        try {
+            source.setText(contentText);
+        } catch (final Exception e) {
+            throw new GmailException("Failed settting content text", e);
+        }
     }
 
     @Override
@@ -169,7 +166,7 @@ public class JavaMailGmailMessage extends GmailMessage {
 
     /**
      * Gets a {@link List} of {@link EmailAddress} by {@link RecipientType}
-     * 
+     *
      * @param type Recipient type
      * @return List of Addresses
      * @throws MessagingException in case something is wrong
@@ -182,6 +179,19 @@ public class JavaMailGmailMessage extends GmailMessage {
             addresses.add(new EmailAddress(temp.getPersonal(), temp.getAddress()));
         }
         return addresses;
+    }
+
+    @Override
+    public EmailAddress getFrom() {
+        if (from == null) {
+            try {
+                final InternetAddress f = (InternetAddress) source.getFrom()[0];
+                from = new EmailAddress(f.getPersonal(), f.getAddress());
+            } catch (final Exception e) {
+                throw new GmailException("Failed getting from address", e);
+            }
+        }
+        return from;
     }
 
     @Override
@@ -199,33 +209,11 @@ public class JavaMailGmailMessage extends GmailMessage {
     }
 
     @Override
-    public EmailAddress getFrom() {
-        if (from == null) {
-            try {
-                final InternetAddress f = (InternetAddress) source.getFrom()[0];
-                from = new EmailAddress(f.getPersonal(), f.getAddress());
-            } catch (final Exception e) {
-                throw new GmailException("Failed getting from address", e);
-            }
-        }
-        return from;
-    }
-
-    @Override
     public Date getSendDate() {
         try {
             return source.getSentDate();
         } catch (final Exception e) {
             throw new GmailException("Failed getting send date", e);
-        }
-    }
-
-    @Override
-    public void setSubject(final String subject) {
-        try {
-            source.setSubject(subject);
-        } catch (final Exception e) {
-            throw new GmailException("Failed setting subject", e);
         }
     }
 
@@ -239,21 +227,21 @@ public class JavaMailGmailMessage extends GmailMessage {
     }
 
     @Override
-    public void setContentText(final String contentText) {
+    public void setSubject(final String subject) {
         try {
-            source.setText(contentText);
+            source.setSubject(subject);
         } catch (final Exception e) {
-            throw new GmailException("Failed settting content text", e);
+            throw new GmailException("Failed setting subject", e);
         }
     }
 
     @Override
     public String getPreview() {
-    	String text = getContentText();
-    	if (text.length() > Constants.PREVIEW_LENGTH) {
-    		return text.substring(0, Constants.PREVIEW_LENGTH - 3) + "...";
-    	}
-    	return text;
+        String text = getContentText();
+        if (text.length() > Constants.PREVIEW_LENGTH) {
+            return text.substring(0, Constants.PREVIEW_LENGTH - 3) + "...";
+        }
+        return text;
     }
 
     @Override
@@ -292,10 +280,10 @@ public class JavaMailGmailMessage extends GmailMessage {
 
             // message header tags used to get header information
             String[] headers = new String[]{
-                Constants.MESSAGE_ID,
-                Constants.MESSAGE_SUBJECT,
-                Constants.MESSAGE_IN_REPLY_TO,
-                Constants.MESSAGE_REFERENCES};
+                    Constants.MESSAGE_ID,
+                    Constants.MESSAGE_SUBJECT,
+                    Constants.MESSAGE_IN_REPLY_TO,
+                    Constants.MESSAGE_REFERENCES};
 
             @SuppressWarnings("unchecked")
             Enumeration<Header> matchingHeaders =
@@ -303,7 +291,7 @@ public class JavaMailGmailMessage extends GmailMessage {
 
             while (matchingHeaders.hasMoreElements()) {
                 Header header = matchingHeaders.nextElement();
-                registry.put(header.getName(), header.getValue());
+                registry.put(header.getName().toUpperCase(), header.getValue());
             }
 
             if (!registry.isEmpty()) {
